@@ -1,0 +1,43 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Đăng Ký - WatchShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="max-width: 400px; margin: 3rem auto;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h2 style="text-align: center; color: var(--primary); margin-bottom: 2rem;">📝 Đăng Ký Tài Khoản</h2>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="username">Tên Đăng Nhập</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password1">Mật Khẩu</label>
+                    <input type="password" id="password1" name="password1" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password2">Xác Nhận Mật Khẩu</label>
+                    <input type="password" id="password2" name="password2" required>
+                </div>
+                
+                <button type="submit" class="btn btn-success" style="width: 100%; padding: 0.75rem;">Đăng Ký</button>
+            </form>
+            
+            <p style="text-align: center; margin-top: 2rem;">
+                Đã có tài khoản? <a href="{% url 'login' %}" style="color: var(--secondary); font-weight: bold;">Đăng Nhập</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

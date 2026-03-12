@@ -1,0 +1,86 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Giỏ Hàng - WatchShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="section-title">🛒 Giỏ Hàng</h2>
+    
+    {% if cart_items %}
+        <div style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem;">
+            <!-- Cart Items -->
+            <div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sản Phẩm</th>
+                            <th>Giá</th>
+                            <th>Số Lượng</th>
+                            <th>Tổng</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart_items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.product.name }}</strong><br>
+                                    <small class="text-muted">{{ item.product.brand }}</small>
+                                </td>
+                                <td>
+                                    {% if item.product.discount_price %}
+                                        <del class="text-muted">{{ item.product.price|floatformat:0 }}đ</del><br>
+                                        {{ item.product.discount_price|floatformat:0 }}đ
+                                    {% else %}
+                                        {{ item.product.price|floatformat:0 }}đ
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.quantity }}</td>
+                                <td style="font-weight: bold; color: var(--secondary);">
+                                    {% widthratio item.product.discount_price|default:item.product.price 1 item.quantity %}đ
+                                </td>
+                                <td>
+                                    <form method="post" action="{% url 'remove_from_cart' item.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn" style="background-color: #e74c3c; padding: 0.3rem 0.6rem; font-size: 0.8rem;">Xóa</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Cart Summary -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); height: fit-content;">
+                <h3 style="color: var(--primary); margin-bottom: 1rem;">Tóm Tắt Đơn Hàng</h3>
+                
+                <div style="padding: 1rem 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;">
+                    <span>Tạm Tính:</span>
+                    <strong>{{ total|floatformat:0 }}đ</strong>
+                </div>
+                
+                <div style="padding: 1rem 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;">
+                    <span>Vận Chuyển:</span>
+                    <strong style="color: var(--success);">Miễn Phí</strong>
+                </div>
+                
+                <div style="padding: 1rem 0; display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; color: var(--secondary);">
+                    <span>Tổng Cộng:</span>
+                    <span>{{ total|floatformat:0 }}đ</span>
+                </div>
+                
+                <a href="{% url 'checkout' %}" class="btn btn-success" style="width: 100%; text-align: center; display: block; padding: 0.75rem; margin-top: 1rem;">Tiến Hành Thanh Toán</a>
+                
+                <a href="{% url 'product_list' %}" class="btn" style="width: 100%; text-align: center; display: block; padding: 0.75rem; margin-top: 0.5rem;">Tiếp Tục Mua Sắm</a>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center" style="padding: 3rem;">
+            <h3>Giỏ Hàng Trống</h3>
+            <p style="margin: 1rem 0;">Không có sản phẩm nào trong giỏ hàng của bạn.</p>
+            <a href="{% url 'product_list' %}" class="btn btn-success">Bắt Đầu Mua Sắm</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

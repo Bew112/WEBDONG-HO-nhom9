@@ -1,0 +1,106 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}{{ product.name }} - WatchShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav style="margin: 1rem 0; font-size: 0.9rem;">
+        <a href="{% url 'home' %}">Trang Chủ</a> / 
+        <a href="{% url 'product_list' %}">Sản Phẩm</a> / 
+        <strong>{{ product.name }}</strong>
+    </nav>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0;">
+        <!-- Product Image -->
+        <div>
+            <img src="{% if product.image %}{{ product.image.url }}{% else %}https://via.placeholder.com/500x500?text=No+Image{% endif %}" alt="{{ product.name }}" style="width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        </div>
+        
+        <!-- Product Info -->
+        <div>
+            <div class="product-brand" style="font-size: 1rem; margin-bottom: 0.5rem;">{{ product.brand }}</div>
+            <h1 style="color: var(--primary); margin-bottom: 1rem;">{{ product.name }}</h1>
+            
+            {% if product.status == 'available' %}
+                <span class="stock-status stock-available" style="font-size: 1rem; padding: 0.5rem 1rem;">✓ Có Sẵn - Kho: {{ product.stock }}</span>
+            {% else %}
+                <span class="stock-status stock-soldout" style="font-size: 1rem; padding: 0.5rem 1rem;">✗ Hết Hàng</span>
+            {% endif %}
+            
+            <div style="margin: 2rem 0; padding-bottom: 2rem; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1rem;">
+                    {% if product.discount_price %}
+                        <span class="discount-badge" style="font-size: 1rem; padding: 0.5rem 1rem;">-{{ product.get_discount_percentage }}% GIẢM</span>
+                        <span class="original-price" style="font-size: 1.2rem;">{{ product.price|floatformat:0 }}đ</span>
+                        <span style="font-size: 2.5rem; font-weight: bold; color: var(--secondary);">{{ product.discount_price|floatformat:0 }}đ</span>
+                    {% else %}
+                        <span style="font-size: 2.5rem; font-weight: bold; color: var(--secondary);">{{ product.price|floatformat:0 }}đ</span>
+                    {% endif %}
+                </div>
+                
+                {% if product.status == 'available' %}
+                    <form method="post" action="{% url 'add_to_cart' %}" style="display: flex; gap: 1rem;">
+                        {% csrf_token %}
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}" style="width: 80px;">
+                        <button type="submit" class="btn btn-success" style="flex: 1;">🛒 Thêm Vào Giỏ</button>
+                    </form>
+                {% else %}
+                    <button class="btn" disabled style="opacity: 0.5; cursor: not-allowed;">Không Thể Mua</button>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <h3 style="color: var(--primary); margin-bottom: 1rem;">Mô Tả Sản Phẩm</h3>
+                <p>{{ product.description }}</p>
+            </div>
+            
+            <div style="background-color: #ecf0f1; padding: 1rem; border-radius: 4px;">
+                <h4 style="color: var(--primary); margin-bottom: 0.5rem;">✅ Thông Tin Chung</h4>
+                <ul style="list-style: none;">
+                    <li>📦 <strong>Danh Mục:</strong> {{ product.category.name }}</li>
+                    <li>🏷️ <strong>Thương Hiệu:</strong> {{ product.brand }}</li>
+                    <li>📅 <strong>Cập Nhật:</strong> {{ product.updated_at|date:"d/m/Y" }}</li>
+                    <li>🎁 <strong>Trạng Thái:</strong> 
+                        {% if product.status == 'available' %}
+                            <span style="color: var(--success);">Có Sẵn</span>
+                        {% else %}
+                            <span style="color: var(--secondary);">{{ product.get_status_display }}</span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Related Products -->
+    {% if related_products %}
+        <div class="mt-4">
+            <h2 class="section-title">Sản Phẩm Liên Quan</h2>
+            <div class="products-grid">
+                {% for related in related_products %}
+                    <div class="product-card">
+                        <img src="{% if related.image %}{{ related.image.url }}{% else %}https://via.placeholder.com/250x250?text=No+Image{% endif %}" alt="{{ related.name }}" class="product-image">
+                        <div class="product-info">
+                            <div class="product-brand">{{ related.brand }}</div>
+                            <h3 class="product-name">{{ related.name }}</h3>
+                            
+                            <div class="product-price">
+                                {% if related.discount_price %}
+                                    <span class="discount-badge">-{{ related.get_discount_percentage }}%</span>
+                                    <span class="original-price">{{ related.price|floatformat:0 }}đ</span>
+                                    <span class="price">{{ related.discount_price|floatformat:0 }}đ</span>
+                                {% else %}
+                                    <span class="price">{{ related.price|floatformat:0 }}đ</span>
+                                {% endif %}
+                            </div>
+                            
+                            <a href="{% url 'product_detail' related.id %}" class="btn" style="display: block; text-align: center; margin-top: 1rem; width: 100%;">Chi Tiết</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

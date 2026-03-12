@@ -1,0 +1,63 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Dashboard - WatchShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="section-title">📊 Dashboard Cá Nhân</h2>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin: 2rem 0;">
+        <!-- Stats Cards -->
+        <div style="background: linear-gradient(135deg, var(--primary), #34495e); color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ orders_count }}</div>
+            <h3>Đơn Hàng</h3>
+            <p style="opacity: 0.8;">Tổng cộng</p>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, var(--secondary), #c0392b); color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ total_spent|floatformat:0 }}đ</div>
+            <h3>Tổng Chi Tiêu</h3>
+            <p style="opacity: 0.8;">Tất cả thời gian</p>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, var(--success), #229954); color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">👤</div>
+            <h3>Tài Khoản</h3>
+            <p style="opacity: 0.8;">{{ user.username }}</p>
+        </div>
+    </div>
+    
+    <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 2rem 0;">
+        <h3 style="color: var(--primary); margin-bottom: 1rem;">⚙️ Thông Tin Tài Khoản</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            <div>
+                <h4 style="color: var(--primary); margin-bottom: 1rem;">Thông Tin Cá Nhân</h4>
+                <ul style="list-style: none; line-height: 2;">
+                    <li><strong>Tên Đăng Nhập:</strong> {{ user.username }}</li>
+                    <li><strong>Email:</strong> {{ user.email }}</li>
+                    <li><strong>Tên Đầy Đủ:</strong> {{ user.get_full_name|default:"Chưa cập nhật" }}</li>
+                    <li><strong>Ngày Tham Gia:</strong> {{ user.date_joined|date:"d/m/Y" }}</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4 style="color: var(--primary); margin-bottom: 1rem;">Hành Động</h4>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <a href="{% url 'order_list' %}" class="btn btn-success">📋 Xem Đơn Hàng</a>
+                    <a href="{% url 'product_list' %}" class="btn">🛍️ Tiếp Tục Mua</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="background: #ecf0f1; padding: 1.5rem; border-radius: 8px; margin: 2rem 0;">
+        <h3 style="color: var(--primary); margin-bottom: 1rem;">💡 Mẹo Mua Sắm</h3>
+        <ul style="list-style: inside;">
+            <li>✓ Kiểm tra các sản phẩm giảm giá trong mục "Cửa Hàng"</li>
+            <li>✓ Theo dõi các đơn hàng của bạn trong "Danh Sách Đơn Hàng"</li>
+            <li>✓ Liên hệ với chúng tôi nếu có câu hỏi về đơn hàng của bạn</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

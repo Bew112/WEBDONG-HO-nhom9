@@ -1,0 +1,94 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Thanh Toán - WatchShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="section-title">💳 Thanh Toán</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
+        <!-- Checkout Form -->
+        <form method="post">
+            {% csrf_token %}
+            
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h3 style="color: var(--primary); margin-bottom: 1.5rem;">Thông Tin Giao Hàng</h3>
+                
+                <div class="form-group">
+                    <label for="name">Họ Tên (Thông Tin Từ Tài Khoản)</label>
+                    <input type="text" id="name" value="{{ user.get_full_name|default:user.username }}" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" value="{{ user.email }}" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Số Điện Thoại *</label>
+                    <input type="tel" id="phone" name="phone_number" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="address">Địa Chỉ Giao Hàng *</label>
+                    <textarea id="address" name="delivery_address" required placeholder="Ví dụ: 123 Đường ABC, Quận 1, TP.HCM"></textarea>
+                </div>
+                
+                <h3 style="color: var(--primary); margin-top: 2rem; margin-bottom: 1rem;">Phương Thức Thanh Toán</h3>
+                <div style="background: #ecf0f1; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+                    <label style="display: flex; align-items: center;">
+                        <input type="radio" name="payment" value="cod" checked> 
+                        <span style="margin-left: 0.5rem;">💰 Thanh Toán Khi Nhận Hàng (COD)</span>
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-success" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Xác Nhận Đơn Hàng</button>
+            </div>
+        </form>
+        
+        <!-- Order Summary -->
+        <div>
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h3 style="color: var(--primary); margin-bottom: 1rem;">📦 Chi Tiết Đơn Hàng</h3>
+                
+                <div style="max-height: 300px; overflow-y: auto; margin-bottom: 1rem;">
+                    {% for item in cart_items %}
+                        <div style="padding: 0.75rem 0; border-bottom: 1px solid var(--border);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                <span style="font-weight: 500;">{{ item.product.name }}</span>
+                                <span style="color: var(--secondary);">
+                                    {% widthratio item.product.discount_price|default:item.product.price 1 item.quantity %}đ
+                                </span>
+                            </div>
+                            <small class="text-muted">x{{ item.quantity }} × 
+                                {% if item.product.discount_price %}
+                                    {{ item.product.discount_price|floatformat:0 }}đ
+                                {% else %}
+                                    {{ item.product.price|floatformat:0 }}đ
+                                {% endif %}
+                            </small>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <div style="padding: 1rem 0; border-top: 2px solid var(--border); display: flex; justify-content: space-between; font-weight: bold;">
+                    <span>Tạm Tính:</span>
+                    <span>{{ total_amount|floatformat:0 }}đ</span>
+                </div>
+                
+                <div style="padding: 0.75rem 0; display: flex; justify-content: space-between;">
+                    <span>Vận Chuyển:</span>
+                    <span style="color: var(--success);">Miễn Phí</span>
+                </div>
+                
+                <div style="padding: 1rem 0; border-top: 2px solid var(--secondary); display: flex; justify-content: space-between; font-size: 1.3rem; color: var(--secondary); font-weight: bold;">
+                    <span>Tổng Cộng:</span>
+                    <span>{{ total_amount|floatformat:0 }}đ</span>
+                </div>
+            </div>
+            
+            <a href="{% url 'cart' %}" class="btn" style="width: 100%; text-align: center; display: block; padding: 0.75rem; margin-top: 1rem;">← Quay Lại Giỏ Hàng</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

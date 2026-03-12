@@ -1,0 +1,55 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Trang Chủ - WatchShop{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <div class="container">
+        <h1>🎯 Cửa Hàng Đồng Hồ Chính Hãng</h1>
+        <p>Khám phá bộ sưu tập đồng hồ sang trọng từ các thương hiệu hàng đầu thế giới</p>
+        <a href="{% url 'product_list' %}" class="btn btn-success">Mua Sắm Ngay</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="section-title">Sản Phẩm Nổi Bật</div>
+    
+    {% if products %}
+        <div class="products-grid">
+            {% for product in products %}
+                <div class="product-card">
+                    <img src="{% if product.image %}{{ product.image.url }}{% else %}https://via.placeholder.com/250x250?text=No+Image{% endif %}" alt="{{ product.name }}" class="product-image">
+                    <div class="product-info">
+                        <div class="product-brand">{{ product.brand }}</div>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        
+                        {% if product.status == 'available' %}
+                            <span class="stock-status stock-available">✓ Có Sẵn</span>
+                        {% else %}
+                            <span class="stock-status stock-soldout">✗ Hết Hàng</span>
+                        {% endif %}
+                        
+                        <div class="product-price">
+                            {% if product.discount_price %}
+                                <span class="discount-badge">-{{ product.get_discount_percentage }}%</span>
+                                <span class="original-price">{{ product.price|floatformat:0 }}đ</span>
+                                <span class="price">{{ product.discount_price|floatformat:0 }}đ</span>
+                            {% else %}
+                                <span class="price">{{ product.price|floatformat:0 }}đ</span>
+                            {% endif %}
+                        </div>
+                        
+                        <a href="{% url 'product_detail' product.id %}" class="btn" style="display: block; text-align: center; margin-top: 1rem;">Chi Tiết</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-center">Không có sản phẩm nào.</p>
+    {% endif %}
+    
+    <div class="text-center mt-4">
+        <a href="{% url 'product_list' %}" class="btn btn-success">Xem Tất Cả Sản Phẩm</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Danh Sách Sản Phẩm - WatchShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="section-title">🛍️ Danh Sách Sản Phẩm</h2>
+    
+    <div style="display: grid; grid-template-columns: 250px 1fr; gap: 2rem; margin: 2rem 0;">
+        <!-- Sidebar Filters -->
+        <aside>
+            <form method="get" class="mb-3">
+                <div class="form-group">
+                    <label for="search">Tìm Kiếm</label>
+                    <input type="text" name="q" id="search" placeholder="Tên, thương hiệu..." value="{{ request.GET.q }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Danh Mục</label>
+                    <select name="category" id="category">
+                        <option value="">-- Tất Cả --</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if request.GET.category|add:"0" == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="price_min">Giá Từ</label>
+                    <input type="number" name="price_min" id="price_min" placeholder="Tối thiểu" value="{{ request.GET.price_min }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="price_max">Giá Đến</label>
+                    <input type="number" name="price_max" id="price_max" placeholder="Tối đa" value="{{ request.GET.price_max }}">
+                </div>
+                
+                <button type="submit" class="btn btn-success" style="width: 100%;">Lọc</button>
+                <a href="{% url 'product_list' %}" class="btn" style="display: block; text-align: center; width: 100%; margin-top: 0.5rem;">Xóa Bộ Lọc</a>
+            </form>
+        </aside>
+        
+        <!-- Products List -->
+        <section>
+            {% if products %}
+                <div class="products-grid">
+                    {% for product in products %}
+                        <div class="product-card">
+                            <img src="{% if product.image %}{{ product.image.url }}{% else %}https://via.placeholder.com/250x250?text=No+Image{% endif %}" alt="{{ product.name }}" class="product-image">
+                            <div class="product-info">
+                                {% if product.discount > 0 %}
+                                    <span class="discount-label">-{{ product.discount }}%</span>
+                                {% endif %}
+                                <h3 class="product-name">{{ product.name }}</h3>
+                                <p class="product-description">{{ product.description }}</p>
+                                <p>
+                                    {% if product.discount > 0 %}
+                                        <span class="original-price">{{ product.original_price|floatformat:0 }}đ</span>
+                                    {% endif %}
+                                    <span class="discounted-price">{{ product.price|floatformat:0 }}đ</span>
+                                </p>
+                                <a href="{% url 'product_detail' product.id %}" class="card-button">Chi Tiết</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center">
+                    <p>Không tìm thấy sản phẩm nào. Thử thay đổi bộ lọc của bạn.</p>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}

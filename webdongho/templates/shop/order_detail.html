@@ -1,0 +1,93 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Chi Tiết Đơn Hàng #{{ order.id }} - WatchShop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="section-title">📦 Đơn Hàng #{{ order.id }}</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
+        <!-- Order Items -->
+        <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h3 style="color: var(--primary); margin-bottom: 1rem;">Chi Tiết Sản Phẩm</h3>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sản Phẩm</th>
+                        <th>Giá</th>
+                        <th>Số Lượng</th>
+                        <th>Tổng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order_items %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.product.name }}</strong><br>
+                                <small class="text-muted">{{ item.product.brand }}</small>
+                            </td>
+                            <td>{{ item.price|floatformat:0 }}đ</td>
+                            <td>{{ item.quantity }}</td>
+                            <td style="font-weight: bold; color: var(--secondary);">
+                                {% widthratio item.price 1 item.quantity %}đ
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Order Info -->
+        <div>
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1rem;">
+                <h3 style="color: var(--primary); margin-bottom: 1rem;">Thông Tin Đơn Hàng</h3>
+                
+                <div style="margin-bottom: 1rem;">
+                    <small class="text-muted">Mã Đơn Hàng</small>
+                    <div style="font-size: 1.2rem; font-weight: bold;">{{ order.id }}</div>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                    <small class="text-muted">Ngày Đặt</small>
+                    <div>{{ order.created_at|date:"d/m/Y H:i" }}</div>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                    <small class="text-muted">Trạng Thái</small>
+                    <div>
+                        {% if order.status == 'pending' %}
+                            <span style="background-color: #fff3cd; color: #856404; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">⏳ Chờ Duyệt</span>
+                        {% elif order.status == 'approved' %}
+                            <span style="background-color: #d4edda; color: #155724; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">✓ Đã Duyệt</span>
+                        {% else %}
+                            <span style="background-color: #f8d7da; color: #721c24; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">✗ Từ Chối</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div style="padding-top: 1rem; border-top: 1px solid var(--border); margin-bottom: 1rem;">
+                    <small class="text-muted">Tổng Tiền</small>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: var(--secondary);">{{ order.total_amount|floatformat:0 }}đ</div>
+                </div>
+            </div>
+            
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h3 style="color: var(--primary); margin-bottom: 1rem;">📍 Giao Hàng</h3>
+                
+                <div style="margin-bottom: 1rem;">
+                    <small class="text-muted">Địa Chỉ</small>
+                    <div>{{ order.delivery_address }}</div>
+                </div>
+                
+                <div>
+                    <small class="text-muted">Số Điện Thoại</small>
+                    <div>{{ order.phone_number }}</div>
+                </div>
+            </div>
+            
+            <a href="{% url 'order_list' %}" class="btn" style="width: 100%; text-align: center; display: block; padding: 0.75rem; margin-top: 1rem;">← Quay Lại Danh Sách</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
