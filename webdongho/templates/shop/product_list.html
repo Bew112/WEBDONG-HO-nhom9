@@ -46,7 +46,17 @@
                 <div class="products-grid">
                     {% for product in products %}
                         <div class="product-card">
-                            <img src="{% if product.image %}{{ product.image.url }}{% else %}https://via.placeholder.com/250x250?text=No+Image{% endif %}" alt="{{ product.name }}" class="product-image">
+                            <a href="{% url 'product_detail' product.id %}">
+                                {% if product.image %}
+                                {% if product.image.name|slice:":4" == "http" %}
+                                    <img src="{{ product.image.name }}" alt="{{ product.name }}" class="product-image">
+                                {% else %}
+                                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
+                                {% endif %}
+                            {% else %}
+                                <img src="https://via.placeholder.com/250x250?text=No+Image" alt="{{ product.name }}" class="product-image">
+                            {% endif %}
+                            </a>
                             <div class="product-info">
                                 {% if product.discount > 0 %}
                                     <span class="discount-label">-{{ product.discount }}%</span>

@@ -1,0 +1,328 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}
+    {% trans 'Dashboard' %} | {{ block.super }}
+{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+        }
+        
+        .stat-card.primary {
+            border-left-color: #417690;
+        }
+        
+        .stat-card.success {
+            border-left-color: #27ae60;
+        }
+        
+        .stat-card.warning {
+            border-left-color: #f39c12;
+        }
+        
+        .stat-card.danger {
+            border-left-color: #e74c3c;
+        }
+        
+        .stat-card h3 {
+            margin: 0 0 0.5rem;
+            font-size: 2rem;
+            color: #417690;
+            font-weight: bold;
+        }
+        
+        .stat-card p {
+            margin: 0;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .table-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+        
+        .table-section h2 {
+            margin-top: 0;
+            color: #417690;
+            border-bottom: 2px solid #417690;
+            padding-bottom: 0.5rem;
+        }
+        
+        .admin-dashboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .admin-dashboard-table th {
+            background-color: #417690;
+            color: white;
+            padding: 1rem;
+            text-align: left;
+        }
+        
+        .admin-dashboard-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .admin-dashboard-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .status-pending {
+            background-color: #f39c12;
+        }
+        
+        .status-approved {
+            background-color: #27ae60;
+        }
+        
+        .status-rejected {
+            background-color: #e74c3c;
+        }
+        
+        .user-type-admin {
+            background-color: #e74c3c;
+        }
+        
+        .user-type-staff {
+            background-color: #f39c12;
+        }
+        
+        .user-type-customer {
+            background-color: #27ae60;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{% trans "Dashboard" %}</h1>
+    
+    <!-- Thống Kê Tổng Quan -->
+    <div class="dashboard-container">
+        <div class="stat-card primary">
+            <h3>{{ total_orders }}</h3>
+            <p>📊 Tổng Đơn Hàng</p>
+        </div>
+        
+        <div class="stat-card success">
+            <h3>{{ total_revenue|floatformat:0 }}đ</h3>
+            <p>💰 Tổng Doanh Thu</p>
+        </div>
+        
+        <div class="stat-card warning">
+            <h3>{{ pending_orders }}</h3>
+            <p>⏳ Chờ Xử Lý</p>
+        </div>
+        
+        <div class="stat-card primary">
+            <h3>{{ total_products }}</h3>
+            <p>🛍️ Sản Phẩm</p>
+        </div>
+        
+        <div class="stat-card primary">
+            <h3>{{ total_users }}</h3>
+            <p>👥 Người Dùng</p>
+        </div>
+        
+        <div class="stat-card success">
+            <h3>{{ approved_orders }}</h3>
+            <p>✅ Đã Duyệt</p>
+        </div>
+        
+        <div class="stat-card danger">
+            <h3>{{ rejected_orders }}</h3>
+            <p>❌ Từ Chối</p>
+        </div>
+        
+        <div class="stat-card warning">
+            <h3>{{ available_products }}</h3>
+            <p>📦 Có Sẵn</p>
+        </div>
+    </div>
+
+    <!-- Biểu đồ thống kê -->
+    <div class="table-section">
+        <h2>📈 Biểu Đồ Thống Kê</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h3 style="margin-top: 0;">Đơn hàng theo ngày (7 ngày)</h3>
+                <canvas id="ordersTrendChart" style="max-height: 320px;"></canvas>
+            </div>
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h3 style="margin-top: 0;">Tình trạng đơn hàng</h3>
+                <canvas id="ordersStatusChart" style="max-height: 320px;"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bảng Đơn Hàng Gần Đây -->
+    <div class="table-section">
+        <h2>📋 Đơn Hàng Gần Đây</h2>
+        <table class="admin-dashboard-table">
+            <thead>
+                <tr>
+                    <th>Mã Đơn</th>
+                    <th>Khách Hàng</th>
+                    <th>Ngày Tạo</th>
+                    <th>Trạng Thái</th>
+                    <th>Tổng Tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in recent_orders %}
+                    <tr>
+                        <td><a href="/admin/shop/order/{{ order.id }}/change/"><strong>#{{ order.id }}</strong></a></td>
+                        <td>{{ order.user.username }}</td>
+                        <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            {% if order.status == "pending" %}
+                                <span class="status-badge status-pending">⏳ Chờ Xử Lý</span>
+                            {% elif order.status == "approved" %}
+                                <span class="status-badge status-approved">✅ Đã Duyệt</span>
+                            {% elif order.status == "rejected" %}
+                                <span class="status-badge status-rejected">❌ Từ Chối</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ order.total_amount|floatformat:0 }}đ</strong></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #7f8c8d;">Không có đơn hàng nào</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Bảng Người Dùng Gần Đây -->
+    <div class="table-section">
+        <h2>👥 Người Dùng Gần Đây</h2>
+        <table class="admin-dashboard-table">
+            <thead>
+                <tr>
+                    <th>Tên Đăng Nhập</th>
+                    <th>Email</th>
+                    <th>Tên Đầy Đủ</th>
+                    <th>Ngày Tham Gia</th>
+                    <th>Loại</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in recent_users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.get_full_name|default:"---" }}</td>
+                        <td>{{ user.date_joined|date:"d/m/Y" }}</td>
+                        <td>
+                            {% if user.is_superuser %}
+                                <span class="status-badge user-type-admin">Admin</span>
+                            {% elif user.is_staff %}
+                                <span class="status-badge user-type-staff">Staff</span>
+                            {% else %}
+                                <span class="status-badge user-type-customer">Khách Hàng</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #7f8c8d;">Không có người dùng nào</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Nhanh Chóng Liên Kết -->
+    <div class="table-section">
+        <h2>🔧 Quản Lý Nhanh</h2>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="/admin/shop/product/" class="button">🛍️ Quản Lý Sản Phẩm</a>
+            <a href="/admin/shop/order/" class="button">📋 Quản Lý Đơn Hàng</a>
+            <a href="/admin/auth/user/" class="button">👥 Quản Lý Người Dùng</a>
+            <a href="/admin/shop/category/" class="button">📂 Quản Lý Danh Mục</a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ordersTrendData = JSON.parse('{{ orders_trend_chart|escapejs }}');
+    const ordersStatusData = JSON.parse('{{ orders_status_chart|escapejs }}');
+
+    const ctxTrend = document.getElementById('ordersTrendChart').getContext('2d');
+    new Chart(ctxTrend, {
+        type: 'line',
+        data: {
+            labels: ordersTrendData.labels,
+            datasets: [{
+                label: 'Số đơn hàng',
+                data: ordersTrendData.data,
+                fill: true,
+                backgroundColor: 'rgba(66, 134, 244, 0.2)',
+                borderColor: 'rgba(66, 134, 244, 1)',
+                pointBackgroundColor: 'rgba(66, 134, 244, 1)',
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    const ctxStatus = document.getElementById('ordersStatusChart').getContext('2d');
+    new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+            labels: ordersStatusData.labels,
+            datasets: [{
+                data: ordersStatusData.data,
+                backgroundColor: ['#f39c12', '#27ae60', '#e74c3c'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+</script>
+{% endblock %}

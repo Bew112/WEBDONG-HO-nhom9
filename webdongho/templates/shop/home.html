@@ -3,9 +3,9 @@
 {% block title %}Trang Chủ - WatchShop{% endblock %}
 
 {% block content %}
-<div class="hero">
+<div class="hero" style="--hero-bg: url('{{ MEDIA_URL }}products/800x456_1733304342.jpg');">
     <div class="container">
-        <h1>🎯 Cửa Hàng Đồng Hồ Chính Hãng</h1>
+        <h1> Cửa Hàng Đồng Hồ Chính Hãng</h1>
         <p>Khám phá bộ sưu tập đồng hồ sang trọng từ các thương hiệu hàng đầu thế giới</p>
         <a href="{% url 'product_list' %}" class="btn btn-success">Mua Sắm Ngay</a>
     </div>
@@ -18,7 +18,17 @@
         <div class="products-grid">
             {% for product in products %}
                 <div class="product-card">
-                    <img src="{% if product.image %}{{ product.image.url }}{% else %}https://via.placeholder.com/250x250?text=No+Image{% endif %}" alt="{{ product.name }}" class="product-image">
+                    <a href="{% url 'product_detail' product.id %}">
+                        {% if product.image %}
+                            {% if product.image.name|slice:":4" == "http" %}
+                                <img src="{{ product.image.name }}" alt="{{ product.name }}" class="product-image">
+                            {% else %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
+                            {% endif %}
+                        {% else %}
+                            <img src="https://via.placeholder.com/250x250?text=No+Image" alt="{{ product.name }}" class="product-image">
+                        {% endif %}
+                    </a>
                     <div class="product-info">
                         <div class="product-brand">{{ product.brand }}</div>
                         <h3 class="product-name">{{ product.name }}</h3>

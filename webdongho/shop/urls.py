@@ -1,5 +1,7 @@
-from django.urls import path
+from django.urls import path 
 from . import views
+
+
 
 urlpatterns = [
     # Home & Product
@@ -19,7 +21,4 @@ urlpatterns = [
     path('checkout/', views.checkout, name='checkout'),
     path('orders/', views.order_list, name='order_list'),
     path('order/<int:pk>/', views.order_detail, name='order_detail'),
-    
-    # Dashboard
-    path('dashboard/', views.dashboard, name='dashboard'),
 ]

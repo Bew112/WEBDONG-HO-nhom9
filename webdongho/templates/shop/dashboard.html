@@ -1,63 +1,158 @@
 {% extends 'shop/base.html' %}
 
-{% block title %}Dashboard - WatchShop{% endblock %}
+{% block title %}Admin Dashboard - WatchShop{% endblock %}
 
 {% block content %}
 <div class="container">
-    <h2 class="section-title">📊 Dashboard Cá Nhân</h2>
+    <h2 class="section-title"> Admin Dashboard</h2>
     
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin: 2rem 0;">
-        <!-- Stats Cards -->
-        <div style="background: linear-gradient(135deg, var(--primary), #34495e); color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ orders_count }}</div>
-            <h3>Đơn Hàng</h3>
-            <p style="opacity: 0.8;">Tổng cộng</p>
+    <!-- Thống Kê Tổng Quan -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
+        <div style="background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ total_orders }}</div>
+            <h4 style="margin: 0;">Tổng Đơn Hàng</h4>
+            <p style="opacity: 0.8; font-size: 0.9rem; margin: 0.5rem 0 0 0;">Tất cả thời gian</p>
         </div>
         
-        <div style="background: linear-gradient(135deg, var(--secondary), #c0392b); color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ total_spent|floatformat:0 }}đ</div>
-            <h3>Tổng Chi Tiêu</h3>
-            <p style="opacity: 0.8;">Tất cả thời gian</p>
+        <div style="background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ total_revenue|floatformat:0 }}đ</div>
+            <h4 style="margin: 0;">Tổng Doanh Thu</h4>
+            <p style="opacity: 0.8; font-size: 0.9rem; margin: 0.5rem 0 0 0;">Từ tất cả đơn hàng</p>
         </div>
         
-        <div style="background: linear-gradient(135deg, var(--success), #229954); color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <div style="font-size: 2rem; margin-bottom: 0.5rem;">👤</div>
-            <h3>Tài Khoản</h3>
-            <p style="opacity: 0.8;">{{ user.username }}</p>
+        <div style="background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ pending_orders }}</div>
+            <h4 style="margin: 0;">Chờ Xử Lý</h4>
+            <p style="opacity: 0.8; font-size: 0.9rem; margin: 0.5rem 0 0 0;">{{ pending_revenue|floatformat:0 }}đ</p>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #f39c12, #d68910); color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ total_products }}</div>
+            <h4 style="margin: 0;">Sản Phẩm</h4>
+            <p style="opacity: 0.8; font-size: 0.9rem; margin: 0.5rem 0 0 0;">{{ available_products }} có sẵn</p>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ total_users }}</div>
+            <h4 style="margin: 0;">Người Dùng</h4>
+            <p style="opacity: 0.8; font-size: 0.9rem; margin: 0.5rem 0 0 0;">Khách hàng tổng</p>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #1abc9c, #16a085); color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ approved_orders }}</div>
+            <h4 style="margin: 0;">Đã Duyệt</h4>
+            <p style="opacity: 0.8; font-size: 0.9rem; margin: 0.5rem 0 0 0;">Đơn hàng</p>
         </div>
     </div>
     
-    <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 2rem 0;">
-        <h3 style="color: var(--primary); margin-bottom: 1rem;">⚙️ Thông Tin Tài Khoản</h3>
+    <!-- Bảng Tình Trạng Đơn Hàng -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #f39c12;">
+            <div style="font-size: 2rem; color: #f39c12;">⏳</div>
+            <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">{{ pending_orders }}</div>
+            <p style="color: #7f8c8d; margin-top: 0.5rem;">Đơn hàng chờ xử lý</p>
+        </div>
         
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
-            <div>
-                <h4 style="color: var(--primary); margin-bottom: 1rem;">Thông Tin Cá Nhân</h4>
-                <ul style="list-style: none; line-height: 2;">
-                    <li><strong>Tên Đăng Nhập:</strong> {{ user.username }}</li>
-                    <li><strong>Email:</strong> {{ user.email }}</li>
-                    <li><strong>Tên Đầy Đủ:</strong> {{ user.get_full_name|default:"Chưa cập nhật" }}</li>
-                    <li><strong>Ngày Tham Gia:</strong> {{ user.date_joined|date:"d/m/Y" }}</li>
-                </ul>
-            </div>
-            
-            <div>
-                <h4 style="color: var(--primary); margin-bottom: 1rem;">Hành Động</h4>
-                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                    <a href="{% url 'order_list' %}" class="btn btn-success">📋 Xem Đơn Hàng</a>
-                    <a href="{% url 'product_list' %}" class="btn">🛍️ Tiếp Tục Mua</a>
-                </div>
-            </div>
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #27ae60;">
+            <div style="font-size: 2rem; color: #27ae60;">✅</div>
+            <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">{{ approved_orders }}</div>
+            <p style="color: #7f8c8d; margin-top: 0.5rem;">Đơn hàng đã duyệt</p>
+        </div>
+        
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #e74c3c;">
+            <div style="font-size: 2rem; color: #e74c3c;">❌</div>
+            <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">{{ rejected_orders }}</div>
+            <p style="color: #7f8c8d; margin-top: 0.5rem;">Đơn hàng bị từ chối</p>
+        </div>
+    </div>
+    
+    <!-- Bảng Đơn Hàng Gần Đây -->
+    <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 2rem 0;">
+        <h3 style="color: var(--primary); margin-bottom: 1rem;">📋 Đơn Hàng Gần Đây</h3>
+        
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background-color: var(--primary); color: white;">
+                    <tr>
+                        <th style="padding: 1rem; text-align: left; border: 1px solid #ddd;">Mã Đơn</th>
+                        <th style="padding: 1rem; text-align: left; border: 1px solid #ddd;">Khách Hàng</th>
+                        <th style="padding: 1rem; text-align: left; border: 1px solid #ddd;">Ngày Tạo</th>
+                        <th style="padding: 1rem; text-align: left; border: 1px solid #ddd;">Trạng Thái</th>
+                        <th style="padding: 1rem; text-align: left; border: 1px solid #ddd;">Tổng Tiền</th>
+                        <th style="padding: 1rem; text-align: left; border: 1px solid #ddd;">Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr style="border-bottom: 1px solid #ddd; {% cycle 'background-color: #f9f9f9;' 'background-color: white;' %}">
+                        <td style="padding: 1rem; border: 1px solid #ddd;"><strong>#{{ order.id }}</strong></td>
+                        <td style="padding: 1rem; border: 1px solid #ddd;">{{ order.user.username }}</td>
+                        <td style="padding: 1rem; border: 1px solid #ddd;">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                        <td style="padding: 1rem; border: 1px solid #ddd;">
+                            {% if order.status == "pending" %}
+                                <span style="background-color: #f39c12; color: white; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.85rem;">⏳ Chờ Xử Lý</span>
+                            {% elif order.status == "approved" %}
+                                <span style="background-color: #27ae60; color: white; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.85rem;">✅ Đã Duyệt</span>
+                            {% elif order.status == "rejected" %}
+                                <span style="background-color: #e74c3c; color: white; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.85rem;">❌ Từ Chối</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem; border: 1px solid #ddd;"><strong>{{ order.total_amount|floatformat:0 }}đ</strong></td>
+                        <td style="padding: 1rem; border: 1px solid #ddd;">
+                            <a href="{% url 'order_detail' order.id %}" class="btn btn-small" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">Xem Chi Tiết</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Người Dùng Gần Đây -->
+    <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 2rem 0;">
+        <h3 style="color: var(--primary); margin-bottom: 1rem;">👥 Người Dùng Gần Đây</h3>
+        
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background-color: var(--primary); color: white;">
+                    <tr>
+                        <th style="padding: 1rem; text-align: left; border: 1px solid #ddd;">Tên Đăng Nhập</th>
+                        <th style="padding: 1rem; text-align: left; border: 1px solid #ddd;">Email</th>
+                        <th style="padding: 1rem; text-align: left; border: 1px solid #ddd;">Tên Đầy Đủ</th>
+                        <th style="padding: 1rem; text-align: left; border: 1px solid #ddd;">Ngày Tham Gia</th>
+                        <th style="padding: 1rem; text-align: left; border: 1px solid #ddd;">Loại</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in recent_users %}
+                    <tr style="border-bottom: 1px solid #ddd; {% cycle 'background-color: #f9f9f9;' 'background-color: white;' %}">
+                        <td style="padding: 1rem; border: 1px solid #ddd;"><strong>{{ user.username }}</strong></td>
+                        <td style="padding: 1rem; border: 1px solid #ddd;">{{ user.email }}</td>
+                        <td style="padding: 1rem; border: 1px solid #ddd;">{{ user.get_full_name|default:"---" }}</td>
+                        <td style="padding: 1rem; border: 1px solid #ddd;">{{ user.date_joined|date:"d/m/Y" }}</td>
+                        <td style="padding: 1rem; border: 1px solid #ddd;">
+                            {% if user.is_superuser %}
+                                <span style="background-color: #e74c3c; color: white; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.85rem;">Admin</span>
+                            {% elif user.is_staff %}
+                                <span style="background-color: #f39c12; color: white; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.85rem;">Staff</span>
+                            {% else %}
+                                <span style="background-color: #27ae60; color: white; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.85rem;">Khách Hàng</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
     
     <div style="background: #ecf0f1; padding: 1.5rem; border-radius: 8px; margin: 2rem 0;">
-        <h3 style="color: var(--primary); margin-bottom: 1rem;">💡 Mẹo Mua Sắm</h3>
-        <ul style="list-style: inside;">
-            <li>✓ Kiểm tra các sản phẩm giảm giá trong mục "Cửa Hàng"</li>
-            <li>✓ Theo dõi các đơn hàng của bạn trong "Danh Sách Đơn Hàng"</li>
-            <li>✓ Liên hệ với chúng tôi nếu có câu hỏi về đơn hàng của bạn</li>
-        </ul>
+        <h3 style="color: var(--primary); margin-bottom: 1rem;">📊 Quản Lý</h3>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="/admin/" class="btn btn-success" target="_blank">🔧 Django Admin</a>
+            <a href="{% url 'product_list' %}" class="btn">🛍️ Xem Cửa Hàng</a>
+            <a href="{% url 'home' %}" class="btn">🏠 Trang Chủ</a>
+        </div>
     </div>
 </div>
 {% endblock %}

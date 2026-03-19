@@ -13,7 +13,15 @@
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0;">
         <!-- Product Image -->
         <div>
-            <img src="{% if product.image %}{{ product.image.url }}{% else %}https://via.placeholder.com/500x500?text=No+Image{% endif %}" alt="{{ product.name }}" style="width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            {% if product.image %}
+                {% if product.image.name|slice:":4" == "http" %}
+                    <img src="{{ product.image.name }}" alt="{{ product.name }}" style="width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                {% else %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                {% endif %}
+            {% else %}
+                <img src="https://via.placeholder.com/500x500?text=No+Image" alt="{{ product.name }}" style="width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            {% endif %}
         </div>
         
         <!-- Product Info -->
@@ -56,12 +64,12 @@
             </div>
             
             <div style="background-color: #ecf0f1; padding: 1rem; border-radius: 4px;">
-                <h4 style="color: var(--primary); margin-bottom: 0.5rem;">✅ Thông Tin Chung</h4>
+                <h4 style="color: var(--primary); margin-bottom: 0.5rem;"> Thông Tin Chung</h4>
                 <ul style="list-style: none;">
-                    <li>📦 <strong>Danh Mục:</strong> {{ product.category.name }}</li>
-                    <li>🏷️ <strong>Thương Hiệu:</strong> {{ product.brand }}</li>
-                    <li>📅 <strong>Cập Nhật:</strong> {{ product.updated_at|date:"d/m/Y" }}</li>
-                    <li>🎁 <strong>Trạng Thái:</strong> 
+                    <li> <strong>Danh Mục:</strong> {{ product.category.name }}</li>
+                    <li> <strong>Thương Hiệu:</strong> {{ product.brand }}</li>
+                    <li> <strong>Cập Nhật:</strong> {{ product.updated_at|date:"d/m/Y" }}</li>
+                    <li> <strong>Trạng Thái:</strong> 
                         {% if product.status == 'available' %}
                             <span style="color: var(--success);">Có Sẵn</span>
                         {% else %}

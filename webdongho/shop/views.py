@@ -74,44 +74,27 @@ def product_detail(request, pk):
 
 
 # Authentication
+from .forms import RegistrationForm
+
+
 def register(request):
     """Đăng ký tài khoản"""
     if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password1 = request.POST.get('password1')
-        password2 = request.POST.get('password2')
-        
-        if password1 != password2:
-            messages.error(request, 'Passwords do not match!')
-            return redirect('register')
-        
-        if User.objects.filter(username=username).exists():
-            messages.error(request, 'Username already exists!')
-            return redirect('register')
-        
-        if User.objects.filter(email=email).exists():
-            messages.error(request, 'Email already exists!')
-            return redirect('register')
-        
-        # Kiểm tra mật khẩu không hợp lệ
-        from django.contrib.auth.password_validation import validate_password, ValidationError
-        try:
-            validate_password(password1, user=User(username=username, email=email))
-        except ValidationError as e:
-            for err in e.messages:
-                messages.error(request, err)
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.email = form.cleaned_data.get('email')
+            user.save()
+            messages.success(request, 'Đăng ký thành công! Vui lòng đăng nhập.')
+            return redirect('login')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
             return redirect('register')
 
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password1
-        )
-        messages.success(request, 'Registration successful! Please login.')
-        return redirect('login')
-    
-    return render(request, 'shop/register.html', {'page_title': 'Register'})
+    form = RegistrationForm()
+    return render(request, 'shop/register.html', {'form': form, 'page_title': 'Register'})
 
 
 def login_view(request):
@@ -257,16 +240,5 @@ def order_detail(request, pk):
     return render(request, 'shop/order_detail.html', context)
 
 
-# Dashboard
-@login_required(login_url='login')
-def dashboard(request):
-    """Dashboard người dùng"""
-    orders = Order.objects.filter(user=request.user).count()
-    total_spent = sum(o.total_amount for o in Order.objects.filter(user=request.user))
-    
-    context = {
-        'orders_count': orders,
-        'total_spent': total_spent,
-        'page_title': 'Dashboard'
-    }
-    return render(request, 'shop/dashboard.html', context)
+
+
