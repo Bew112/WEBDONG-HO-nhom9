@@ -1,11 +1,34 @@
 from django.core.management.base import BaseCommand
-from shop.models import Category, Product
+from shop.models import Category, Product, Brand
 
 
 class Command(BaseCommand):
     help = 'Load seed data for watch shop'
 
     def handle(self, *args, **options):
+        # Create Brands
+        brands_data = [
+            {'name': 'Rolex', 'country': 'Switzerland', 'founded_year': 1905},
+            {'name': 'Omega', 'country': 'Switzerland', 'founded_year': 1848},
+            {'name': 'TAG Heuer', 'country': 'Switzerland', 'founded_year': 1860},
+            {'name': 'Patek Philippe', 'country': 'Switzerland', 'founded_year': 1839},
+            {'name': 'IWC', 'country': 'Switzerland', 'founded_year': 1868},
+            {'name': 'Cartier', 'country': 'France', 'founded_year': 1847},
+            {'name': 'Seiko', 'country': 'Japan', 'founded_year': 1881},
+            {'name': 'Casio', 'country': 'Japan', 'founded_year': 1957},
+            {'name': 'Orient', 'country': 'Japan', 'founded_year': 1945},
+        ]
+        
+        brands = {}
+        for brand_data in brands_data:
+            brand, created = Brand.objects.get_or_create(
+                name=brand_data['name'],
+                defaults=brand_data
+            )
+            brands[brand.name] = brand
+            if created:
+                self.stdout.write(f'✓ Created brand: {brand.name}')
+        
         # Create Categories
         categories_data = [
             ('Luxury', 'Đồng hồ hạng sang'),
@@ -22,7 +45,7 @@ class Command(BaseCommand):
             )
             categories[name] = cat
             if created:
-                self.stdout.write(f'Created category: {name}')
+                self.stdout.write(f'✓ Created category: {name}')
         
         # Create Products
         products_data = [
@@ -35,7 +58,8 @@ class Command(BaseCommand):
                 'discount_price': 75000000,
                 'stock': 5,
                 'status': 'available',
-                'image': 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=500&h=500&fit=crop'
+                'warranty_months': 24,
+                'sku': 'ROLEX-SUB-001'
             },
             {
                 'name': 'Omega Seamaster 300M',
@@ -46,7 +70,8 @@ class Command(BaseCommand):
                 'discount_price': 40000000,
                 'stock': 3,
                 'status': 'available',
-                'image': 'https://images.unsplash.com/photo-1547996160-81dac51a7d13?w=500&h=500&fit=crop'
+                'warranty_months': 24,
+                'sku': 'OMEGA-SEA-001'
             },
             {
                 'name': 'TAG Heuer Carrera',
@@ -57,7 +82,8 @@ class Command(BaseCommand):
                 'discount_price': 30000000,
                 'stock': 7,
                 'status': 'available',
-                'image': 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=500&h=500&fit=crop'
+                'warranty_months': 24,
+                'sku': 'TAG-CAR-001'
             },
             {
                 'name': 'Seiko Prospex Diver',
@@ -68,10 +94,11 @@ class Command(BaseCommand):
                 'discount_price': 7000000,
                 'stock': 15,
                 'status': 'available',
-                'image': 'https://images.unsplash.com/photo-1602088113235-229c19758e9f?w=500&h=500&fit=crop'
+                'warranty_months': 12,
+                'sku': 'SEIKO-PRO-001'
             },
             {
-                'name': 'Casio G-Shock',
+                'name': 'Casio G-Shock GA-110',
                 'brand': 'Casio',
                 'category': 'Sports',
                 'description': 'Đồng hồ Casio G-Shock nổi tiếng với độ bền vượt trội, chống sốc và chống nước. Lý tưởng cho các hoạt động ngoài trời.',
@@ -79,7 +106,8 @@ class Command(BaseCommand):
                 'discount_price': 1999999,
                 'stock': 20,
                 'status': 'available',
-                'image': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop'
+                'warranty_months': 12,
+                'sku': 'CASIO-GS-001'
             },
             {
                 'name': 'Patek Philippe Nautilus',
@@ -90,7 +118,8 @@ class Command(BaseCommand):
                 'discount_price': 135000000,
                 'stock': 1,
                 'status': 'available',
-                'image': 'https://images.unsplash.com/photo-1548113682-eac2b68bb56e?w=500&h=500&fit=crop'
+                'warranty_months': 24,
+                'sku': 'PATEK-NAUT-001'
             },
             {
                 'name': 'IWC Pilot Chronograph',
@@ -101,7 +130,8 @@ class Command(BaseCommand):
                 'discount_price': 48000000,
                 'stock': 4,
                 'status': 'available',
-                'image': 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=500&h=500&fit=crop'
+                'warranty_months': 24,
+                'sku': 'IWC-PILOT-001'
             },
             {
                 'name': 'Cartier Ballon Bleu',
@@ -112,7 +142,8 @@ class Command(BaseCommand):
                 'discount_price': 58000000,
                 'stock': 2,
                 'status': 'available',
-                'image': 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=500&h=500&fit=crop'
+                'warranty_months': 24,
+                'sku': 'CARTIER-BLEU-001'
             },
             {
                 'name': 'Orient Automatic Classic',
@@ -123,28 +154,33 @@ class Command(BaseCommand):
                 'discount_price': 2999999,
                 'stock': 12,
                 'status': 'available',
-                'image': 'https://images.unsplash.com/photo-1625305288331-ac8f1b1212e1?w=500&h=500&fit=crop'
+                'warranty_months': 12,
+                'sku': 'ORIENT-AUTO-001'
             },
             {
-                'name': 'Timex Weekender',
-                'brand': 'Other',
+                'name': 'Timex Weekender Casual',
+                'brand': None,
                 'category': 'Casual',
                 'description': 'Timex Weekender - đồng hồ casual đơn giản nhưng chắc chắn. Với dây vải nhung thoải mái và mặt số sạch sẽ.',
                 'price': 1500000,
                 'discount_price': None,
                 'stock': 25,
                 'status': 'available',
-                'image': 'https://images.unsplash.com/photo-1542972062-e5c36664baf8?w=500&h=500&fit=crop'
+                'warranty_months': 12,
+                'sku': 'TIMEX-WEEK-001'
             },
         ]
         
         for prod_data in products_data:
             category = categories[prod_data.pop('category')]
+            brand_name = prod_data.pop('brand')
+            brand = brands.get(brand_name) if brand_name else brands.get('Omega')  # Default brand
+            
             product, created = Product.objects.get_or_create(
                 name=prod_data['name'],
-                defaults={**prod_data, 'category': category}
+                defaults={**prod_data, 'category': category, 'brand': brand}
             )
             if created:
-                self.stdout.write(f'Created product: {product.name}')
+                self.stdout.write(f'✓ Created product: {product.name}')
         
-        self.stdout.write(self.style.SUCCESS('✓ Seed data loaded successfully!'))
+        self.stdout.write(self.style.SUCCESS('\n✓ Seed data loaded successfully!'))

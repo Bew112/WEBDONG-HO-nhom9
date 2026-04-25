@@ -21,4 +21,11 @@ urlpatterns = [
     path('checkout/', views.checkout, name='checkout'),
     path('orders/', views.order_list, name='order_list'),
     path('order/<int:pk>/', views.order_detail, name='order_detail'),
+    
+    # Statistics & Reports
+    path('statistics/', views.statistics_dashboard, name='statistics'),
+    path('reports/revenue/', views.revenue_report, name='revenue_report'),
+    path('reports/category/', views.category_report, name='category_report'),
+    path('reports/products/', views.product_report, name='product_report'),
+    path('reports/order-status/', views.order_status_report, name='order_status_report'),
 ]

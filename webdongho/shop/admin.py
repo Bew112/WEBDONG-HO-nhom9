@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User
 from django.utils import timezone
-from .models import Category, Product, CartItem, Order, OrderItem
+from .models import Category, Product, CartItem, Order, OrderItem, Brand, ProductRating, Shipment
 from django.utils.html import mark_safe
 from django.db.models import Sum
 
@@ -24,8 +24,8 @@ class WatchShopAdminSite(AdminSite):
         # Thống kê
         all_orders = Order.objects.all()
         pending_orders = all_orders.filter(status='pending')
-        approved_orders = all_orders.filter(status='approved')
-        rejected_orders = all_orders.filter(status='rejected')
+        confirmed_orders = all_orders.filter(status='confirmed')
+        delivered_orders = all_orders.filter(status='delivered')
         
         total_revenue = all_orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         pending_revenue = pending_orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
@@ -36,15 +36,15 @@ class WatchShopAdminSite(AdminSite):
         trend_labels = [d.strftime('%d/%m') for d in dates]
         trend_data = [all_orders.filter(created_at__date=d).count() for d in dates]
 
-        status_labels = ['Chờ Xử Lý', 'Đã Duyệt', 'Từ Chối']
-        status_data = [pending_orders.count(), approved_orders.count(), rejected_orders.count()]
+        status_labels = ['Chờ Xác Nhận', 'Đã Xác Nhận', 'Đã Giao']
+        status_data = [pending_orders.count(), confirmed_orders.count(), delivered_orders.count()]
 
         extra_context = extra_context or {}
         extra_context.update({
             'total_orders': all_orders.count(),
             'pending_orders': pending_orders.count(),
-            'approved_orders': approved_orders.count(),
-            'rejected_orders': rejected_orders.count(),
+            'confirmed_orders': confirmed_orders.count(),
+            'delivered_orders': delivered_orders.count(),
             'total_revenue': total_revenue,
             'pending_revenue': pending_revenue,
             'total_products': Product.objects.count(),
@@ -62,6 +62,18 @@ class WatchShopAdminSite(AdminSite):
 admin_site = WatchShopAdminSite()
 
 # Model Admins
+class BrandAdmin(admin.ModelAdmin):
+    def logo_tag(self, obj):
+        if obj.logo:
+            return mark_safe(f'<img src="{obj.logo.url}" style="max-height:40px; max-width:40px; border-radius:4px;" />')
+        return "Không có"
+    logo_tag.short_description = 'Logo'
+    
+    list_display = ['logo_tag', 'name', 'country', 'founded_year', 'created_at']
+    search_fields = ['name', 'country']
+    readonly_fields = ['created_at']
+
+
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'created_at']
     search_fields = ['name']
@@ -91,11 +103,11 @@ class ProductAdmin(admin.ModelAdmin):
     is_available.boolean = True
     is_available.short_description = 'Có sẵn'
 
-    list_display = ['image_tag', 'name', 'category', 'price', 'discount_percent', 'price_after_discount', 'stock', 'is_available', 'created_at']
+    list_display = ['image_tag', 'name', 'brand', 'category', 'price', 'discount_percent', 'price_after_discount', 'stock', 'is_available', 'created_at']
     search_fields = ['name']
-    autocomplete_fields = ['category']
+    autocomplete_fields = ['category', 'brand']
     readonly_fields = ['created_at', 'updated_at']
-    list_filter = ['category', 'status', 'created_at']
+    list_filter = ['brand', 'category', 'status', 'created_at']
 
 
 class CartItemAdmin(admin.ModelAdmin):
@@ -107,6 +119,21 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ['id', 'user', 'total_amount', 'status', 'created_at']
     search_fields = ['user__username', 'phone_number']
     readonly_fields = ['created_at', 'updated_at']
+    list_filter = ['status', 'created_at']
+
+
+class ProductRatingAdmin(admin.ModelAdmin):
+    list_display = ['product', 'user', 'rating', 'created_at']
+    search_fields = ['product__name', 'user__username']
+    readonly_fields = ['created_at', 'updated_at']
+    list_filter = ['rating', 'created_at']
+
+
+class ShipmentAdmin(admin.ModelAdmin):
+    list_display = ['tracking_number', 'order', 'carrier', 'status', 'estimated_delivery', 'actual_delivery']
+    search_fields = ['tracking_number', 'order__id']
+    readonly_fields = ['created_at', 'updated_at']
+    list_filter = ['status', 'carrier', 'created_at']
 
 
 class OrderItemAdmin(admin.ModelAdmin):
@@ -115,8 +142,11 @@ class OrderItemAdmin(admin.ModelAdmin):
 
 
 # Register with custom admin site
+admin_site.register(Brand, BrandAdmin)
 admin_site.register(Category, CategoryAdmin)
 admin_site.register(Product, ProductAdmin)
 admin_site.register(CartItem, CartItemAdmin)
 admin_site.register(Order, OrderAdmin)
 admin_site.register(OrderItem, OrderItemAdmin)
+admin_site.register(ProductRating, ProductRatingAdmin)
+admin_site.register(Shipment, ShipmentAdmin)

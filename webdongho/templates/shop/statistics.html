@@ -1,0 +1,242 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Thống Kê - WatchShop{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 2rem;">
+    <h2 class="section-title">📊 Dashboard Thống Kê</h2>
+    
+    <!-- KPI Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
+            <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">Tổng Đơn Hàng</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #e74c3c;">{{ total_orders }}</div>
+        </div>
+        
+        <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
+            <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">Tổng Doanh Thu</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #27ae60;">{{ total_revenue|floatformat:0 }}đ</div>
+        </div>
+        
+        <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
+            <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">Sản Phẩm</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #3498db;">{{ total_products }}</div>
+        </div>
+        
+        <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
+            <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">Khách Hàng</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #9b59b6;">{{ total_customers }}</div>
+        </div>
+    </div>
+    
+    <!-- Charts -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+        <!-- Revenue Chart -->
+        <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h3>💰 Doanh Thu 7 Ngày Gần Đây</h3>
+            <canvas id="revenueChart"></canvas>
+        </div>
+        
+        <!-- Order Status Chart -->
+        <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h3>📦 Tình Trạng Đơn Hàng</h3>
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Category Revenue Chart -->
+    <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <h3>🎯 Doanh Thu Theo Danh Mục</h3>
+        <canvas id="categoryChart"></canvas>
+    </div>
+    
+    <!-- Top Products -->
+    <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <h3>🔥 Sản Phẩm Bán Chạy</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f5f5f5;">
+                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #ddd;">Sản Phẩm</th>
+                    <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #ddd;">Số Lượng</th>
+                    <th style="padding: 1rem; text-align: right; border-bottom: 2px solid #ddd;">Doanh Thu</th>
+                    <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #ddd;">Đánh Giá</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in top_products %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 1rem;">{{ product.name }}</td>
+                    <td style="padding: 1rem; text-align: center;">{{ product.total_sold }}</td>
+                    <td style="padding: 1rem; text-align: right;">{{ product.total_revenue|floatformat:0 }}đ</td>
+                    <td style="padding: 1rem; text-align: center;">
+                        {% if product.avg_rating %}
+                            ⭐ {{ product.avg_rating|floatformat:1 }}
+                        {% else %}
+                            Chưa có đánh giá
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="padding: 1rem; text-align: center; color: #999;">Không có dữ liệu</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Recent Orders -->
+    <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h3>📋 Đơn Hàng Gần Đây</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f5f5f5;">
+                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #ddd;">Đơn Hàng</th>
+                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #ddd;">Khách Hàng</th>
+                    <th style="padding: 1rem; text-align: right; border-bottom: 2px solid #ddd;">Tổng Tiền</th>
+                    <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #ddd;">Trạng Thái</th>
+                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #ddd;">Ngày</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in recent_orders %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 1rem;"><strong>#{{ order.id }}</strong></td>
+                    <td style="padding: 1rem;">{{ order.user.username }}</td>
+                    <td style="padding: 1rem; text-align: right;">{{ order.total_amount|floatformat:0 }}đ</td>
+                    <td style="padding: 1rem; text-align: center;">
+                        <span style="display: inline-block; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem;
+                        {% if order.status == 'pending' %}
+                            background: #fff3cd; color: #856404;
+                        {% elif order.status == 'confirmed' %}
+                            background: #cfe2ff; color: #084298;
+                        {% elif order.status == 'shipping' %}
+                            background: #d1ecf1; color: #0c5460;
+                        {% elif order.status == 'delivered' %}
+                            background: #d1e7dd; color: #0f5132;
+                        {% elif order.status == 'cancelled' %}
+                            background: #f8d7da; color: #842029;
+                        {% endif %}
+                        ">
+                            {{ order.get_status_display }}
+                        </span>
+                    </td>
+                    <td style="padding: 1rem;">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="padding: 1rem; text-align: center; color: #999;">Không có đơn hàng</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Quick Links to other Reports -->
+    <div style="margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <a href="{% url 'revenue_report' %}" class="btn btn-success" style="display: block; text-align: center; padding: 1rem;">
+            📈 Báo Cáo Doanh Thu
+        </a>
+        <a href="{% url 'category_report' %}" class="btn btn-success" style="display: block; text-align: center; padding: 1rem;">
+            🎯 Báo Cáo Danh Mục
+        </a>
+        <a href="{% url 'product_report' %}" class="btn btn-success" style="display: block; text-align: center; padding: 1rem;">
+            🔥 Sản Phẩm Bán Chạy
+        </a>
+        <a href="{% url 'order_status_report' %}" class="btn btn-success" style="display: block; text-align: center; padding: 1rem;">
+            📦 Tình Trạng Đơn
+        </a>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: {{ dates_7|safe }},
+            datasets: [{
+                label: 'Doanh Thu',
+                data: {{ revenue_7|safe }},
+                borderColor: '#27ae60',
+                backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointBackgroundColor: '#27ae60'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true, position: 'top' }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: function(val) { return val.toLocaleString('vi') + 'đ'; } }
+                }
+            }
+        }
+    });
+    
+    // Status Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    const statusLabels = ['Chờ xác nhận', 'Đã xác nhận', 'Đang giao', 'Đã giao', 'Đã hủy'];
+    const statusCounts = [{{ order_status.pending }}, {{ order_status.confirmed }}, {{ order_status.shipping }}, {{ order_status.delivered }}, {{ order_status.cancelled }}];
+    const colors = ['#ffc107', '#17a2b8', '#0d6efd', '#198754', '#dc3545'];
+    
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusCounts,
+                backgroundColor: colors,
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+    
+    // Category Chart
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(categoryCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ category_names|safe }},
+            datasets: [{
+                label: 'Doanh Thu',
+                data: {{ category_revenues|safe }},
+                backgroundColor: [
+                    '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6'
+                ],
+                borderRadius: 5
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    ticks: { callback: function(val) { return val.toLocaleString('vi') + 'đ'; } }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Báo Cáo Tình Trạng Đơn Hàng - WatchShop{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 2rem;">
+    <h2 class="section-title">📦 Báo Cáo Tình Trạng Đơn Hàng</h2>
+    
+    <!-- Charts Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+        <!-- Pie Chart - Count -->
+        <div style="background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h3>Số Lượng Đơn Hàng</h3>
+            <canvas id="statusCountChart"></canvas>
+        </div>
+        
+        <!-- Doughnut Chart - Revenue -->
+        <div style="background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h3>Doanh Thu Theo Trạng Thái</h3>
+            <canvas id="statusRevenueChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Detailed Table -->
+    <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <h3>Chi Tiết Tình Trạng</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f5f5f5;">
+                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #ddd;">Trạng Thái</th>
+                    <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #ddd;">Số Lượng</th>
+                    <th style="padding: 1rem; text-align: right; border-bottom: 2px solid #ddd;">Doanh Thu</th>
+                    <th style="padding: 1rem; text-align: right; border-bottom: 2px solid #ddd;">% Số Lượng</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% with total_orders=status_data|length %}
+                    {% for item in status_data %}
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 1rem;">
+                            <span style="display: inline-block; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem;
+                            {% if item.status == 'pending' %}
+                                background: #fff3cd; color: #856404;
+                            {% elif item.status == 'confirmed' %}
+                                background: #cfe2ff; color: #084298;
+                            {% elif item.status == 'shipping' %}
+                                background: #d1ecf1; color: #0c5460;
+                            {% elif item.status == 'delivered' %}
+                                background: #d1e7dd; color: #0f5132;
+                            {% elif item.status == 'cancelled' %}
+                                background: #f8d7da; color: #842029;
+                            {% endif %}
+                            ">
+                                {% if item.status == 'pending' %}Chờ xác nhận
+                                {% elif item.status == 'confirmed' %}Đã xác nhận
+                                {% elif item.status == 'shipping' %}Đang giao
+                                {% elif item.status == 'delivered' %}Đã giao
+                                {% elif item.status == 'cancelled' %}Đã hủy
+                                {% elif item.status == 'returned' %}Hoàn trả
+                                {% else %}{{ item.status }}
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td style="padding: 1rem; text-align: center;"><strong>{{ item.count }}</strong></td>
+                        <td style="padding: 1rem; text-align: right;">{{ item.total_revenue|floatformat:0 }}đ</td>
+                        <td style="padding: 1rem; text-align: right;">{{ item.count|mul:100|div:total_orders|floatformat:1 }}%</td>
+                    </tr>
+                    {% endfor %}
+                {% endwith %}
+                <tr style="background: #f9f9f9; border-top: 2px solid #ddd;">
+                    <td style="padding: 1rem;"><strong>Tổng Cộng</strong></td>
+                    <td style="padding: 1rem; text-align: center;"><strong>{{ status_data|length }}</strong></td>
+                    <td style="padding: 1rem; text-align: right;"><strong>{{ status_revenues|add|floatformat:0 }}đ</strong></td>
+                    <td style="padding: 1rem; text-align: right;"><strong>100%</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Back Button -->
+    <a href="{% url 'statistics' %}" class="btn btn-secondary">← Quay Lại Dashboard</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const colors = ['#ffc107', '#17a2b8', '#0d6efd', '#198754', '#dc3545'];
+    
+    // Count Chart
+    const countCtx = document.getElementById('statusCountChart').getContext('2d');
+    new Chart(countCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ status_labels|safe }},
+            datasets: [{
+                data: {{ status_counts|safe }},
+                backgroundColor: colors,
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+    
+    // Revenue Chart
+    const revenueCtx = document.getElementById('statusRevenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ status_labels|safe }},
+            datasets: [{
+                data: {{ status_revenues|safe }},
+                backgroundColor: colors,
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+</script>
+{% endblock %}

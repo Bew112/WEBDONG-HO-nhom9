@@ -1,0 +1,64 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Báo Cáo Doanh Thu - WatchShop{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 2rem;">
+    <h2 class="section-title">📈 Báo Cáo Doanh Thu</h2>
+    
+    <!-- Report Type Selection -->
+    <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <div style="display: flex; gap: 1rem;">
+            <a href="?type=daily" class="btn {% if report_type == 'daily' %}btn-success{% else %}btn-secondary{% endif %}">
+                📅 Theo Ngày
+            </a>
+            <a href="?type=monthly" class="btn {% if report_type == 'monthly' %}btn-success{% else %}btn-secondary{% endif %}">
+                📊 Theo Tháng
+            </a>
+        </div>
+    </div>
+    
+    <!-- Chart -->
+    <div style="background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <h3 style="text-align: center;">{{ chart_label }}</h3>
+        <canvas id="revenueChart" style="max-height: 400px;"></canvas>
+    </div>
+    
+    <!-- Back Button -->
+    <a href="{% url 'statistics' %}" class="btn btn-secondary">← Quay Lại Dashboard</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ labels|safe }},
+            datasets: [{
+                label: 'Doanh Thu',
+                data: {{ revenues|safe }},
+                backgroundColor: '#3498db',
+                borderRadius: 5,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true, position: 'top' }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: '{{ x_label }}' }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: function(val) { return val.toLocaleString('vi') + 'đ'; } }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -9,11 +9,19 @@
     <div style="display: grid; grid-template-columns: 250px 1fr; gap: 2rem; margin: 2rem 0;">
         <!-- Sidebar Filters -->
         <aside>
-            <form method="get" class="mb-3">
+            <!-- Search Form -->
+            <form method="get" style="margin-bottom: 1rem;">
                 <div class="form-group">
                     <label for="search">Tìm Kiếm</label>
-                    <input type="text" name="q" id="search" placeholder="Tên, thương hiệu..." value="{{ request.GET.q }}">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" name="q" id="search" placeholder="Tên, thương hiệu, danh mục..." value="{{ request.GET.q }}" style="flex: 1;">
+                        <button type="submit" class="btn" style="padding: 0.5rem 1rem;">🔍</button>
+                    </div>
                 </div>
+            </form>
+            
+            <form method="get">
+                <input type="hidden" name="q" value="{{ request.GET.q }}">
                 
                 <div class="form-group">
                     <label for="category">Danh Mục</label>

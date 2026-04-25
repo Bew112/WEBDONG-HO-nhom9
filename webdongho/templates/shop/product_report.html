@@ -1,0 +1,100 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Báo Cáo Sản Phẩm Bán Chạy - WatchShop{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 2rem;">
+    <h2 class="section-title">🔥 Báo Cáo Sản Phẩm Bán Chạy</h2>
+    
+    <!-- Sort Options -->
+    <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <div style="display: flex; gap: 1rem;">
+            <a href="?sort=revenue" class="btn {% if sort_by == 'revenue' %}btn-success{% else %}btn-secondary{% endif %}">
+                💰 Theo Doanh Thu
+            </a>
+            <a href="?sort=quantity" class="btn {% if sort_by == 'quantity' %}btn-success{% else %}btn-secondary{% endif %}">
+                📦 Theo Số Lượng
+            </a>
+        </div>
+    </div>
+    
+    <!-- Chart -->
+    <div style="background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <h3>Top 10 Sản Phẩm Bán Chạy</h3>
+        <canvas id="productChart"></canvas>
+    </div>
+    
+    <!-- Table -->
+    <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f5f5f5;">
+                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #ddd;">Sản Phẩm</th>
+                    <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #ddd;">Số Lượng Bán</th>
+                    <th style="padding: 1rem; text-align: right; border-bottom: 2px solid #ddd;">Doanh Thu</th>
+                    <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #ddd;">Đánh Giá</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 1rem;">
+                        <a href="{% url 'product_detail' product.id %}" style="color: #3498db; text-decoration: none;">
+                            {{ product.name }}
+                        </a>
+                    </td>
+                    <td style="padding: 1rem; text-align: center;">{{ product.total_sold }}</td>
+                    <td style="padding: 1rem; text-align: right;">{{ product.total_revenue|floatformat:0 }}đ</td>
+                    <td style="padding: 1rem; text-align: center;">
+                        {% if product.avg_rating %}
+                            ⭐ {{ product.avg_rating|floatformat:1 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="padding: 1rem; text-align: center; color: #999;">Không có dữ liệu</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Back Button -->
+    <a href="{% url 'statistics' %}" class="btn btn-secondary">← Quay Lại Dashboard</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('productChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'horizontalBar',
+        type: 'bar',
+        data: {
+            labels: {{ product_names|safe }},
+            datasets: [{
+                label: '{{ value_label }}',
+                data: {{ product_values|safe }},
+                backgroundColor: '#e74c3c',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    {% if sort_by == 'quantity' %}
+                    ticks: { stepSize: 1 }
+                    {% else %}
+                    ticks: { callback: function(val) { return val.toLocaleString('vi') + 'đ'; } }
+                    {% endif %}
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

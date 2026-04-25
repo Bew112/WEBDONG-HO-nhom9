@@ -2,11 +2,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import Q
+from django.db.models import Q, Avg, Sum, Count, F
 from django.views.decorators.http import require_POST
-from .models import Product, Category, CartItem, Order, OrderItem
+from .models import Product, Category, CartItem, Order, OrderItem, Brand, ProductRating, Shipment
 from django.contrib import messages
 from django.http import JsonResponse
+from datetime import timedelta, datetime
+from django.utils import timezone
+import json
 
 # Home Page
 def home(request):
@@ -28,12 +31,13 @@ def product_list(request):
     categories = Category.objects.all()
     
     # Tìm kiếm
-    search_query = request.GET.get('q', '')
+    search_query = request.GET.get('q', '').strip()
     if search_query:
         products = products.filter(
             Q(name__icontains=search_query) | 
             Q(description__icontains=search_query) |
-            Q(brand__icontains=search_query)
+            Q(brand__name__icontains=search_query) |
+            Q(category__name__icontains=search_query)
         )
     
     # Lọc theo danh mục
@@ -240,5 +244,211 @@ def order_detail(request, pk):
     return render(request, 'shop/order_detail.html', context)
 
 
+# ============= THỐNG KÊ & BÁO CÁO =============
+
+def statistics_dashboard(request):
+    """Dashboard thống kê tổng hợp"""
+    today = timezone.now().date()
+    days_ago_7 = today - timedelta(days=7)
+    days_ago_30 = today - timedelta(days=30)
+    
+    # Tổng quan
+    total_orders = Order.objects.count()
+    total_revenue = Order.objects.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+    total_products = Product.objects.count()
+    total_customers = Order.objects.values('user').distinct().count()
+    
+    # Đơn hàng theo trạng thái
+    order_status = {
+        'pending': Order.objects.filter(status='pending').count(),
+        'confirmed': Order.objects.filter(status='confirmed').count(),
+        'shipping': Order.objects.filter(status='shipping').count(),
+        'delivered': Order.objects.filter(status='delivered').count(),
+        'cancelled': Order.objects.filter(status='cancelled').count(),
+    }
+    
+    # Doanh thu 7 ngày gần đây
+    dates_7 = [(today - timedelta(days=i)).isoformat() for i in range(6, -1, -1)]
+    revenue_7 = []
+    for d in dates_7:
+        date_obj = datetime.fromisoformat(d).date()
+        revenue = Order.objects.filter(created_at__date=date_obj).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        revenue_7.append(float(revenue))
+    
+    # Doanh thu theo danh mục
+    categories_data = Category.objects.annotate(
+        total_revenue=Sum('products__order_items__price')
+    ).values('name', 'total_revenue').filter(total_revenue__isnull=False).order_by('-total_revenue')[:5]
+    
+    category_names = [cat['name'] for cat in categories_data]
+    category_revenues = [float(cat['total_revenue'] or 0) for cat in categories_data]
+    
+    # Sản phẩm bán chạy
+    top_products = Product.objects.annotate(
+        total_sold=Sum('order_items__quantity'),
+        total_revenue=Sum(F('order_items__price') * F('order_items__quantity'))
+    ).filter(total_sold__isnull=False).order_by('-total_revenue')[:5]
+    
+    # Đơn hàng 7 ngày gần đây
+    recent_orders = Order.objects.select_related('user').order_by('-created_at')[:5]
+    
+    context = {
+        'total_orders': total_orders,
+        'total_revenue': int(total_revenue),
+        'total_products': total_products,
+        'total_customers': total_customers,
+        'order_status': order_status,
+        'dates_7': json.dumps(dates_7),
+        'revenue_7': json.dumps(revenue_7),
+        'category_names': json.dumps(category_names),
+        'category_revenues': json.dumps(category_revenues),
+        'top_products': top_products,
+        'recent_orders': recent_orders,
+        'page_title': 'Dashboard Thống Kê'
+    }
+    return render(request, 'shop/statistics.html', context)
 
 
+def revenue_report(request):
+    """Báo cáo doanh thu theo ngày/tháng"""
+    report_type = request.GET.get('type', 'daily')  # daily, monthly
+    
+    if report_type == 'monthly':
+        # Báo cáo theo tháng (năm hiện tại)
+        months = []
+        month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        revenues = []
+        
+        today = timezone.now()
+        for month in range(1, today.month + 1):
+            first_day = today.replace(month=month, day=1)
+            if month == today.month:
+                last_day = today.date()
+            else:
+                last_day = (first_day.replace(month=month + 1, day=1) - timedelta(days=1)).date()
+            
+            revenue = Order.objects.filter(
+                created_at__date__gte=first_day.date(),
+                created_at__date__lte=last_day
+            ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            
+            months.append(month_names[month - 1])
+            revenues.append(float(revenue))
+        
+        chart_label = 'Doanh thu theo tháng'
+        x_label = 'Tháng'
+    else:
+        # Báo cáo theo ngày (30 ngày gần đây)
+        today = timezone.now().date()
+        months = []
+        revenues = []
+        
+        for i in range(29, -1, -1):
+            date = today - timedelta(days=i)
+            revenue = Order.objects.filter(created_at__date=date).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            
+            months.append(date.strftime('%d/%m'))
+            revenues.append(float(revenue))
+        
+        chart_label = 'Doanh thu theo ngày (30 ngày)'
+        x_label = 'Ngày'
+    
+    context = {
+        'report_type': report_type,
+        'chart_label': chart_label,
+        'x_label': x_label,
+        'labels': json.dumps(months),
+        'revenues': json.dumps(revenues),
+        'page_title': 'Báo Cáo Doanh Thu'
+    }
+    return render(request, 'shop/revenue_report.html', context)
+
+
+def category_report(request):
+    """Báo cáo doanh thu theo danh mục"""
+    categories = Category.objects.annotate(
+        total_revenue=Sum('products__order_items__price'),
+        product_count=Count('products'),
+        order_count=Count('products__order_items')
+    ).filter(total_revenue__isnull=False).order_by('-total_revenue')
+    
+    category_names = [cat.name for cat in categories]
+    category_revenues = [float(cat.total_revenue or 0) for cat in categories]
+    
+    context = {
+        'categories': categories,
+        'category_names': json.dumps(category_names),
+        'category_revenues': json.dumps(category_revenues),
+        'page_title': 'Báo Cáo Theo Danh Mục'
+    }
+    return render(request, 'shop/category_report.html', context)
+
+
+def product_report(request):
+    """Báo cáo sản phẩm bán chạy"""
+    sort_by = request.GET.get('sort', 'revenue')  # revenue, quantity
+    
+    products = Product.objects.annotate(
+        total_sold=Sum('order_items__quantity'),
+        total_revenue=Sum(F('order_items__price') * F('order_items__quantity')),
+        avg_rating=Avg('ratings__rating')
+    ).filter(total_sold__isnull=False)
+    
+    if sort_by == 'quantity':
+        products = products.order_by('-total_sold')
+    else:
+        products = products.order_by('-total_revenue')
+    
+    product_names = [p.name for p in products[:10]]
+    if sort_by == 'quantity':
+        product_values = [int(p.total_sold or 0) for p in products[:10]]
+        value_label = 'Số Lượng Bán'
+    else:
+        product_values = [float(p.total_revenue or 0) for p in products[:10]]
+        value_label = 'Doanh Thu'
+    
+    context = {
+        'sort_by': sort_by,
+        'products': products[:10],
+        'product_names': json.dumps(product_names),
+        'product_values': json.dumps(product_values),
+        'value_label': value_label,
+        'page_title': 'Báo Cáo Sản Phẩm Bán Chạy'
+    }
+    return render(request, 'shop/product_report.html', context)
+
+
+def order_status_report(request):
+    """Báo cáo tình trạng đơn hàng"""
+    status_data = Order.objects.values('status').annotate(
+        count=Count('id'),
+        total_revenue=Sum('total_amount')
+    ).order_by('-count')
+    
+    status_labels = {
+        'pending': 'Chờ xác nhận',
+        'confirmed': 'Đã xác nhận',
+        'shipping': 'Đang giao',
+        'delivered': 'Đã giao',
+        'cancelled': 'Đã hủy',
+        'returned': 'Hoàn trả'
+    }
+    
+    statuses = []
+    counts = []
+    revenues = []
+    
+    for item in status_data:
+        status = item['status']
+        statuses.append(status_labels.get(status, status))
+        counts.append(item['count'])
+        revenues.append(float(item['total_revenue'] or 0))
+    
+    context = {
+        'status_data': status_data,
+        'status_labels': json.dumps(statuses),
+        'status_counts': json.dumps(counts),
+        'status_revenues': json.dumps(revenues),
+        'page_title': 'Báo Cáo Tình Trạng Đơn Hàng'
+    }
+    return render(request, 'shop/order_status_report.html', context)

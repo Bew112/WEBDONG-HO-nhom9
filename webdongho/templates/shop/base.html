@@ -525,12 +525,12 @@
                 <div class="header-content">
                     <h1 class="logo" style="margin-right: 32px;">Watch Shop</h1>
                     <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                        <div style="display: flex; align-items: center; background: #fff; border-radius: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.10); padding: 0.25rem 1rem 0.25rem 1.5rem; width: 100%; max-width: 600px; position: relative;">
-                            <input type="text" class="search-bar" placeholder="Tìm kiếm sản phẩm Watch..." style="border: none; outline: none; background: transparent; font-size: 1.1rem; flex: 1; padding: 0.75rem 0;">
-                            <span style="color: #e74c3c; font-size: 1.5rem; margin-left: 8px; cursor: pointer;">
+                        <form method="get" action="{% url 'product_list' %}" style="display: flex; align-items: center; background: #fff; border-radius: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.10); padding: 0.25rem 1rem 0.25rem 1.5rem; width: 100%; max-width: 600px; position: relative;">
+                            <input type="text" name="q" class="search-bar" placeholder="Tìm kiếm sản phẩm Watch..." value="{{ request.GET.q }}" style="border: none; outline: none; background: transparent; font-size: 1.1rem; flex: 1; padding: 0.75rem 0;">
+                            <button type="submit" style="background: transparent; border: none; color: #e74c3c; font-size: 1.5rem; margin-left: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="#e74c3c" stroke-width="2"/><path stroke="#e74c3c" stroke-width="2" stroke-linecap="round" d="M20 20l-3-3"/></svg>
-                            </span>
-                        </div>
+                            </button>
+                        </form>
                         <div style="display: flex; align-items: center; gap: 32px; margin-left: 32px;">
                             <a href="{% url 'order_list' %}" style="color: white; text-decoration: none; display: flex; flex-direction: column; align-items: center;">
                                 <span style="font-size: 1.6rem;">&#128717;</span>
