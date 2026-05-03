@@ -57,11 +57,19 @@
                     <small class="text-muted">Trạng Thái</small>
                     <div>
                         {% if order.status == 'pending' %}
-                            <span style="background-color: #fff3cd; color: #856404; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">⏳ Chờ Duyệt</span>
-                        {% elif order.status == 'approved' %}
-                            <span style="background-color: #d4edda; color: #155724; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">✓ Đã Duyệt</span>
+                            <span style="background-color: #fff3cd; color: #856404; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">⏳ Chờ Xác Nhận</span>
+                        {% elif order.status == 'confirmed' %}
+                            <span style="background-color: #d4edda; color: #155724; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">✓ Đã Xác Nhận</span>
+                        {% elif order.status == 'shipping' %}
+                            <span style="background-color: #d1ecf1; color: #0c5460; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">🚚 Đang Giao</span>
+                        {% elif order.status == 'delivered' %}
+                            <span style="background-color: #d4edda; color: #155724; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">✅ Đã Giao</span>
+                        {% elif order.status == 'cancelled' %}
+                            <span style="background-color: #f8d7da; color: #721c24; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">❌ Đã Hủy</span>
+                        {% elif order.status == 'returned' %}
+                            <span style="background-color: #f8d7da; color: #721c24; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">🔁 Đã Hoàn Trả</span>
                         {% else %}
-                            <span style="background-color: #f8d7da; color: #721c24; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">✗ Từ Chối</span>
+                            <span style="background-color: #f8d7da; color: #721c24; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">{{ order.get_status_display }}</span>
                         {% endif %}
                     </div>
                 </div>
@@ -70,6 +78,21 @@
                     <small class="text-muted">Tổng Tiền</small>
                     <div style="font-size: 1.5rem; font-weight: bold; color: var(--secondary);">{{ order.total_amount|floatformat:0 }}đ</div>
                 </div>
+
+                {% if order.payment_method == 'bank_transfer' %}
+                    <div style="background-color: #f5f7ff; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #d1d9ff;">
+                        <h3 style="color: #1f3fbb; margin-bottom: 0.75rem;">💳 Thanh toán chuyển khoản</h3>
+                        <div style="margin-bottom: 0.75rem;"><strong>Ngân hàng:</strong> VietinBank</div>
+                        <div style="margin-bottom: 0.75rem;"><strong>Chi nhánh:</strong> CN THAI NGUYEN - HOI SO</div>
+                        <div style="margin-bottom: 0.75rem;"><strong>Chủ tài khoản:</strong> BANNAVONG SOUKSAVANH</div>
+                        <div style="margin-bottom: 0.75rem;"><strong>Số tài khoản:</strong> 107877332500</div>
+                        <div style="margin-bottom: 0.75rem;"><strong>Mã thanh toán:</strong> <code>{{ order.payment_reference }}</code></div>
+                        <div style="margin-bottom: 1rem; display: flex; justify-content: center;">
+                            <img src="{% url 'order_payment_qr' order.id %}" alt="QR Thanh Toán" style="max-width: 240px; width: 100%; height: auto; border: 1px solid #d1d9ff; padding: 0.5rem; background: white;" />
+                        </div>
+                        <div style="color: #3d3d3d; font-size: 0.95rem;">Quét mã QR VietQR để thanh toán nhanh hơn hoặc dùng nội dung chuyển khoản.</div>
+                    </div>
+                {% endif %}
             </div>
             
             <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">

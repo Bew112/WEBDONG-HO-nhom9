@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -131,6 +131,74 @@
         }
         .auth-links a:hover {
             color: var(--secondary);
+        }
+
+        /* Language Switcher */
+        .lang-switcher {
+            position: relative;
+            display: inline-block;
+        }
+
+        .lang-switcher-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            padding: 0;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.3s;
+        }
+
+        .lang-switcher-btn:hover {
+            color: var(--secondary);
+        }
+
+        .lang-switcher-menu {
+            display: none;
+            position: absolute;
+            background-color: var(--primary);
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            padding: 12px 16px;
+            z-index: 1;
+            right: 0;
+            top: 100%;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        .lang-switcher:hover .lang-switcher-menu {
+            display: block;
+        }
+
+        .lang-switcher-menu form {
+            margin: 0;
+        }
+
+        .lang-switcher-menu button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 8px 0;
+            width: 100%;
+            text-align: left;
+            font-weight: 500;
+            transition: color 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .lang-switcher-menu button:hover {
+            color: var(--secondary);
+        }
+
+        .lang-switcher-menu button.active {
+            color: var(--secondary);
+            font-weight: 600;
         }
 
         /* Button helpers (used across templates) */
@@ -505,7 +573,25 @@
                     <div class="right auth-links">
                         <a href="{% url 'home' %}" class="top-link top-red"><i class="fas fa-home"></i> Trang Chủ</a>
                         <a href="#" class="top-link top-red"><i class="fas fa-question-circle"></i> Hỗ Trợ</a>
-                        <a href="#" class="top-link top-red">Tiếng Việt</a>
+                        
+                        <!-- Language Switcher -->
+                        <div class="lang-switcher">
+                            <button type="button" class="lang-switcher-btn top-link top-red">
+                                🌐 {% if LANGUAGE_CODE == 'vi' %}Tiếng Việt{% else %}English{% endif %}
+                            </button>
+                            <div class="lang-switcher-menu">
+                                <form method="post" action="{% url 'set_language' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.path }}">
+                                    <button type="submit" name="language" value="vi" class="{% if LANGUAGE_CODE == 'vi' %}active{% endif %}">🇻🇳 Tiếng Việt</button>
+                                </form>
+                                <form method="post" action="{% url 'set_language' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.path }}">
+                                    <button type="submit" name="language" value="en" class="{% if LANGUAGE_CODE == 'en' %}active{% endif %}">🇬🇧 English</button>
+                                </form>
+                            </div>
+                        </div>
                         
                         {% if request.user.is_authenticated %}
                             <!-- User Account -->

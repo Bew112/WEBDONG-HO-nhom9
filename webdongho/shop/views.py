@@ -1,12 +1,18 @@
+import io
+
+import qrcode
+from qrcode.image.styledpil import StyledPilImage
+from qrcode.image.styles.moduledrawers import RoundedModuleDrawer
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q, Avg, Sum, Count, F
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 from .models import Product, Category, CartItem, Order, OrderItem, Brand, ProductRating, Shipment
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from datetime import timedelta, datetime
 from django.utils import timezone
 import json
@@ -131,7 +137,7 @@ def logout_view(request):
 def cart(request):
     """Giỏ hàng"""
     cart_items = CartItem.objects.filter(user=request.user)
-    total = sum(item.product.discount_price or item.product.price * item.quantity for item in cart_items)
+    total = sum((item.product.discount_price or item.product.price) * item.quantity for item in cart_items)
     
     context = {
         'cart_items': cart_items,
@@ -166,6 +172,21 @@ def add_to_cart(request):
 
 @login_required(login_url='login')
 @require_POST
+def buy_now(request):
+    """Mua ngay sản phẩm mà không qua trang giỏ hàng"""
+    product_id = request.POST.get('product_id')
+    quantity = int(request.POST.get('quantity', 1))
+    product = get_object_or_404(Product, pk=product_id)
+
+    if product.status != 'available':
+        messages.error(request, 'Sản phẩm hiện không thể mua ngay.')
+        return redirect('product_detail', pk=product_id)
+
+    return redirect(f"{reverse('checkout')}?buy_now_product_id={product.id}&buy_now_quantity={quantity}")
+
+
+@login_required(login_url='login')
+@require_POST
 def remove_from_cart(request, pk):
     """Xóa khỏi giỏ hàng"""
     cart_item = get_object_or_404(CartItem, pk=pk, user=request.user)
@@ -178,41 +199,79 @@ def remove_from_cart(request, pk):
 def checkout(request):
     """Thanh toán"""
     cart_items = CartItem.objects.filter(user=request.user)
-    if not cart_items.exists():
-        messages.error(request, 'Your cart is empty!')
-        return redirect('product_list')
-    
-    total_amount = sum(item.product.discount_price or item.product.price * item.quantity for item in cart_items)
-    
-    if request.method == 'POST':
+    buy_now_items = None
+    buy_now_product_id_post = request.POST.get('buy_now_product_id')
+    buy_now_quantity_post = int(request.POST.get('buy_now_quantity', 1)) if request.POST.get('buy_now_quantity') else 1
+    buy_now_product_id_get = request.GET.get('buy_now_product_id')
+    buy_now_quantity_get = int(request.GET.get('buy_now_quantity', 1)) if request.GET.get('buy_now_quantity') else 1
+
+    if request.method == 'GET':
+        if buy_now_product_id_get:
+            product = get_object_or_404(Product, pk=buy_now_product_id_get)
+            buy_now_items = [{'product': product, 'quantity': buy_now_quantity_get}]
+            total_amount = (product.discount_price or product.price) * buy_now_quantity_get
+        else:
+            if not cart_items.exists():
+                messages.error(request, 'Your cart is empty!')
+                return redirect('product_list')
+            total_amount = sum((item.product.discount_price or item.product.price) * item.quantity for item in cart_items)
+
+    elif request.method == 'POST':
         delivery_address = request.POST.get('delivery_address')
         phone_number = request.POST.get('phone_number')
-        
-        # Tạo đơn hàng
-        order = Order.objects.create(
-            user=request.user,
-            total_amount=total_amount,
-            delivery_address=delivery_address,
-            phone_number=phone_number
-        )
-        
-        # Tạo chi tiết đơn hàng
-        for item in cart_items:
+        payment_method = request.POST.get('payment', 'cod')
+
+        if buy_now_product_id_post:
+            product = get_object_or_404(Product, pk=buy_now_product_id_post)
+            quantity = buy_now_quantity_post
+            order = Order.objects.create(
+                user=request.user,
+                total_amount=(product.discount_price or product.price) * quantity,
+                delivery_address=delivery_address,
+                phone_number=phone_number,
+                payment_method=payment_method,
+            )
+            if payment_method == 'bank_transfer':
+                order.payment_reference = f"TT{order.id:06d}"
+                order.save()
             OrderItem.objects.create(
                 order=order,
-                product=item.product,
-                quantity=item.quantity,
-                price=item.product.discount_price or item.product.price
+                product=product,
+                quantity=quantity,
+                price=product.discount_price or product.price
             )
-        
-        # Xóa giỏ hàng
-        cart_items.delete()
-        
+            buy_now_items = [{'product': product, 'quantity': quantity}]
+            total_amount = (product.discount_price or product.price) * quantity
+        else:
+            if not cart_items.exists():
+                messages.error(request, 'Your cart is empty!')
+                return redirect('cart')
+            total_amount = sum((item.product.discount_price or item.product.price) * item.quantity for item in cart_items)
+            order = Order.objects.create(
+                user=request.user,
+                total_amount=total_amount,
+                delivery_address=delivery_address,
+                phone_number=phone_number,
+                payment_method=payment_method,
+            )
+            if payment_method == 'bank_transfer':
+                order.payment_reference = f"TT{order.id:06d}"
+                order.save()
+            for item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    quantity=item.quantity,
+                    price=item.product.discount_price or item.product.price
+                )
+            cart_items.delete()
+
         messages.success(request, 'Order placed successfully!')
         return redirect('order_detail', pk=order.id)
-    
+
     context = {
         'cart_items': cart_items,
+        'buy_now_items': buy_now_items,
         'total_amount': total_amount,
         'page_title': 'Checkout'
     }
@@ -242,6 +301,37 @@ def order_detail(request, pk):
         'page_title': f'Order {order.id}'
     }
     return render(request, 'shop/order_detail.html', context)
+
+
+@login_required(login_url='login')
+def order_payment_qr(request, pk):
+    """Trả về QR code cho đơn hàng chuyển khoản"""
+    order = get_object_or_404(Order, pk=pk, user=request.user)
+    if order.payment_method != 'bank_transfer':
+        return HttpResponse(status=404)
+
+    payload = (
+        f"VietinBank;CN THAI NGUYEN - HOI SO;BANNAVONG SOUKSAVANH;"
+        f"107877332500;SOTIEN:{order.total_amount:.0f};NOIDUNG:{order.payment_reference}"
+    )
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=3,
+    )
+    qr.add_data(payload)
+    qr.make(fit=True)
+    img = qr.make_image(
+        image_factory=StyledPilImage,
+        module_drawer=RoundedModuleDrawer(),
+        fill_color='black',
+        back_color='white'
+    )
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+    return HttpResponse(buffer.getvalue(), content_type='image/png')
 
 
 # ============= THỐNG KÊ & BÁO CÁO =============

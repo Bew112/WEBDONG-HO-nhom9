@@ -47,11 +47,12 @@
                 </div>
                 
                 {% if product.status == 'available' %}
-                    <form method="post" action="{% url 'add_to_cart' %}" style="display: flex; gap: 1rem;">
+                    <form method="post" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
                         {% csrf_token %}
                         <input type="hidden" name="product_id" value="{{ product.id }}">
                         <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}" style="width: 80px;">
-                        <button type="submit" class="btn btn-success" style="flex: 1;">🛒 Thêm Vào Giỏ</button>
+                        <button type="submit" formaction="{% url 'add_to_cart' %}" class="btn btn-success" style="flex: 1; min-width: 150px;">🛒 Thêm Vào Giỏ</button>
+                        <button type="submit" formaction="{% url 'buy_now' %}" class="btn btn-primary" style="flex: 1; min-width: 150px; background: #e74c3c; border-color: #e74c3c;">⚡ Mua Ngay</button>
                     </form>
                 {% else %}
                     <button class="btn" disabled style="opacity: 0.5; cursor: not-allowed;">Không Thể Mua</button>

@@ -101,12 +101,27 @@
             background-color: #f39c12;
         }
         
-        .status-approved {
+        .status-confirmed {
             background-color: #27ae60;
         }
         
         .status-rejected {
             background-color: #e74c3c;
+        }
+
+        .confirm-button {
+            margin-left: 0.75rem;
+            padding: 0.35rem 0.85rem;
+            border: none;
+            border-radius: 4px;
+            background-color: #2c7a74;
+            color: white;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .confirm-button:hover {
+            background-color: #235f5a;
         }
         
         .user-type-admin {
@@ -207,8 +222,12 @@
                         <td>
                             {% if order.status == "pending" %}
                                 <span class="status-badge status-pending">⏳ Chờ Xử Lý</span>
-                            {% elif order.status == "approved" %}
-                                <span class="status-badge status-approved">✅ Đã Duyệt</span>
+                                <form method="post" action="/admin/shop/order/{{ order.id }}/confirm/" style="display:inline; margin-left:0.75rem;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="confirm-button">Xác nhận</button>
+                                </form>
+                            {% elif order.status == "confirmed" or order.status == "approved" %}
+                                <span class="status-badge status-confirmed">✅ Đã Xác Nhận</span>
                             {% elif order.status == "rejected" %}
                                 <span class="status-badge status-rejected">❌ Từ Chối</span>
                             {% endif %}

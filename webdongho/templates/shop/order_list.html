@@ -26,7 +26,7 @@
                         <td>
                             {% if order.status == 'pending' %}
                                 <span style="background-color: #fff3cd; color: #856404; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">⏳ Chờ Duyệt</span>
-                            {% elif order.status == 'approved' %}
+                            {% elif order.status == 'confirmed' or order.status == 'approved' %}
                                 <span style="background-color: #d4edda; color: #155724; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">✓ Đã Duyệt</span>
                             {% else %}
                                 <span style="background-color: #f8d7da; color: #721c24; padding: 0.3rem 0.6rem; border-radius: 3px; font-weight: 600;">✗ Từ Chối</span>

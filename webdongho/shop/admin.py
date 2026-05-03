@@ -1,9 +1,11 @@
 import json
 from datetime import timedelta
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import path
 from django.utils import timezone
 from .models import Category, Product, CartItem, Order, OrderItem, Brand, ProductRating, Shipment
 from django.utils.html import mark_safe
@@ -57,6 +59,24 @@ class WatchShopAdminSite(AdminSite):
         })
         
         return super().index(request, extra_context)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('shop/order/<int:order_id>/confirm/', self.admin_view(self.confirm_order_view), name='shop_order_confirm'),
+        ]
+        return custom_urls + urls
+
+    def confirm_order_view(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id)
+        if order.status != 'pending':
+            messages.warning(request, f"Đơn hàng #{order.id} không ở trạng thái chờ xác nhận.")
+            return redirect(f"/admin/shop/order/{order.id}/change/")
+
+        order.status = 'confirmed'
+        order.save()
+        messages.success(request, f"Đã xác nhận đơn hàng #{order.id}.")
+        return redirect(f"/admin/shop/order/{order.id}/change/")
 
 # Tạo instance custom admin site
 admin_site = WatchShopAdminSite()
@@ -120,6 +140,15 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'phone_number']
     readonly_fields = ['created_at', 'updated_at']
     list_filter = ['status', 'created_at']
+    actions = ['confirm_orders']
+
+    @admin.action(description='Xác nhận đơn hàng đã chọn')
+    def confirm_orders(self, request, queryset):
+        updated = queryset.filter(status='pending').update(status='confirmed')
+        if updated:
+            self.message_user(request, f"Đã xác nhận {updated} đơn hàng.", messages.SUCCESS)
+        else:
+            self.message_user(request, "Không có đơn hàng chờ xác nhận trong lựa chọn.", messages.WARNING)
 
 
 class ProductRatingAdmin(admin.ModelAdmin):

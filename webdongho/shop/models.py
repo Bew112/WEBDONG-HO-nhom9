@@ -141,6 +141,12 @@ class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    payment_method = models.CharField(
+        max_length=20,
+        choices=[('cod', 'COD'), ('bank_transfer', 'Chuyển khoản ngân hàng')],
+        default='cod'
+    )
+    payment_reference = models.CharField(max_length=100, blank=True)
     delivery_address = models.TextField()
     phone_number = models.CharField(max_length=20)
     email = models.EmailField(null=True, blank=True)
